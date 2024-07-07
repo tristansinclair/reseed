@@ -1,0 +1,52 @@
+{
+    "Map": {
+        "BoundingBox": {
+            "LowerRight": {
+                "Latitude": 32.68368,
+                "Longitude": -117.11836
+            },
+            "UpperLeft": {
+                "Latitude": 32.739,
+                "Longitude": -117.17948
+            }
+        },
+        "CountryCode": "US"
+    },
+    "Geography": {
+        "ID": "h6emeh3",
+        "Display": "San Diego, CA",
+        "GeographyType": 2,
+        "Address": {
+            "City": "San Diego",
+            "CountryCode": "USA",
+            "County": "San Diego",
+            "State": "CA",
+            "MarketName": "San Diego",
+            "DMA": "San Diego, CA"
+        },
+        "Location": {
+            "Latitude": 32.825,
+            "Longitude": -117.094
+        },
+        "BoundingBox": {
+            "LowerRight": {
+                "Latitude": 32.53479,
+                "Longitude": -116.90572
+            },
+            "UpperLeft": {
+                "Latitude": 33.11425,
+                "Longitude": -117.2823
+            }
+        },
+        "v": 23508,
+        "IsPmcSearchByCityState": false
+    },
+    "Listing": {},
+    "Paging": {
+        "Page": "1"
+    },
+    "IsBoundedSearch": true,
+    "ResultSeed": 203723,
+    "Options": 0,
+    "CountryAbbreviation": "US"
+}
