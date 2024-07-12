@@ -1,0 +1,54 @@
+{
+    "Map": {
+        "Resolution": null,
+        "BoundingBox": {
+            "UpperLeft": {
+                "Latitude": 32.965535454134624,
+                "Longitude": -117.33988983043669
+            },
+            "LowerRight": {
+                "Latitude": 32.52314768809575,
+                "Longitude": -116.85099822887419
+            }
+        },
+    },
+    "Geography": {
+        "Location": {
+            "Latitude": 32.73816,
+            "Longitude": -117.10959
+        },
+    },
+}
+
+
+
+{
+    "Map": {
+        "BoundingBox": {
+            "UpperLeft": {
+                "Latitude": 32.92781838920683,
+                "Longitude": -117.40036329587161
+            },
+            "LowerRight": {
+                "Latitude": 32.485242975593884,
+                "Longitude": -117.0371278222388
+            }
+        },
+    },
+    "Geography": {
+        "Location": {
+            "Latitude": 32.825,
+            "Longitude": -117.094
+        },
+        "BoundingBox": {
+            "LowerRight": {
+                "Latitude": 32.53479,
+                "Longitude": -116.90572
+            },
+            "UpperLeft": {
+                "Latitude": 33.11425,
+                "Longitude": -117.2823
+            }
+        },
+    },
+}
