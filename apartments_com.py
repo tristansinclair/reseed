@@ -49,7 +49,7 @@ this store the apartment data which looks like this:
 """
 
 
-buildings_seen = set()
+address_seen = set()
 units_seen = set()
 apartments = []
 
@@ -106,13 +106,10 @@ def fetch_building_data(listing_url):
 
     if soup.find("div", class_="pricingGridTitleBlock"):
         # This is a building with multiple units in it
-        print("Processing building listing")
-        return process_building_listing_html(soup)
+        process_building_listing_html(soup)
     else:
         # This is a single unit listing
-        print("Processing single listing")
-        return process_single_listing_html(soup)
-
+        process_single_listing_html(soup)
 
 
 def process_bedroom_range(bedrooms):
@@ -121,14 +118,14 @@ def process_bedroom_range(bedrooms):
         return None, None, None
 
     # Handle variations and convert 'Studio' to 0
-    if 'Studio' in bedrooms:
+    if "Studio" in bedrooms:
         beds_min = 0
     else:
         beds_min = None
-    
+
     # Match for ranges like '1 - 3 bd' or '1 - 3 beds' or '1 - 3 bedrooms'
-    bedrooms_match = re.findall(r'(\d+)', bedrooms)
-    
+    bedrooms_match = re.findall(r"(\d+)", bedrooms)
+
     if bedrooms_match:
         if beds_min is None:
             beds_min = int(bedrooms_match[0])
@@ -137,14 +134,15 @@ def process_bedroom_range(bedrooms):
         beds_max = beds_min
 
     if beds_min is not None and beds_max is not None:
-            beds_string = f"{beds_min} - {beds_max} beds"
-            # replace 0 with 'Studio'
-            if beds_min == 0:
-                beds_string = beds_string.replace('0', 'Studio')
+        beds_string = f"{beds_min} - {beds_max} beds"
+        # replace 0 with 'Studio'
+        if beds_min == 0:
+            beds_string = beds_string.replace("0", "Studio")
     else:
         beds_string = None
 
     return beds_min, beds_max, beds_string
+
 
 def process_bathroom_range(bathrooms):
     # Handle a none case
@@ -152,8 +150,8 @@ def process_bathroom_range(bathrooms):
         return None, None, None
 
     # Match for ranges like '1.5 - 3 baths' or '1 - 3 ba'
-    bathrooms_match = re.findall(r'(\d+\.?\d*)', bathrooms)
-    
+    bathrooms_match = re.findall(r"(\d+\.?\d*)", bathrooms)
+
     if bathrooms_match:
         baths_min = float(bathrooms_match[0])
         baths_max = float(bathrooms_match[-1])
@@ -163,23 +161,24 @@ def process_bathroom_range(bathrooms):
 
     if baths_min is not None and baths_max is not None:
         baths_string = f"{baths_min} - {baths_max} baths"
-        baths_string = baths_string.replace('.0', '')
+        baths_string = baths_string.replace(".0", "")
     else:
         baths_string = None
-    
+
     return baths_min, baths_max, baths_string
+
 
 def process_square_feet_range(square_feet):
     # Handle a none case
     if square_feet is None:
         return None, None, None
-    
+
     # Match for ranges like '575 - 1,969 sq ft'
-    square_feet_match = re.findall(r'(\d{1,3}(,\d{3})?)', square_feet)
-    
+    square_feet_match = re.findall(r"(\d{1,3}(,\d{3})?)", square_feet)
+
     if square_feet_match:
-        sq_ft_min = int(square_feet_match[0][0].replace(',', ''))
-        sq_ft_max = int(square_feet_match[-1][0].replace(',', ''))
+        sq_ft_min = int(square_feet_match[0][0].replace(",", ""))
+        sq_ft_max = int(square_feet_match[-1][0].replace(",", ""))
     else:
         sq_ft_min = None
         sq_ft_max = None
@@ -188,20 +187,21 @@ def process_square_feet_range(square_feet):
         sq_ft_string = f"{sq_ft_min} - {sq_ft_max} sq ft"
     else:
         sq_ft_string = None
-    
+
     return sq_ft_min, sq_ft_max, sq_ft_string
+
 
 def process_rent_range(rent_range):
     # Handle a none case
     if rent_range is None:
         return None, None, None
-    
+
     # Match for ranges like '$1,995 - $10,730'
-    rent_match = re.findall(r'\$\d{1,3}(,\d{3})?', rent_range)
-    
+    rent_match = re.findall(r"\$\d{1,3}(,\d{3})?", rent_range)
+
     if rent_match:
-        rent_min = int(rent_match[0].replace(',', ''))
-        rent_max = int(rent_match[-1].replace(',', ''))
+        rent_min = int(rent_match[0].replace(",", ""))
+        rent_max = int(rent_match[-1].replace(",", ""))
     else:
         rent_min = None
         rent_max = None
@@ -210,8 +210,18 @@ def process_rent_range(rent_range):
         rent_string = f"${rent_min} - ${rent_max}"
     else:
         rent_string = None
-    
+
     return rent_min, rent_max, rent_string
+
+
+def extract_unit_data(soup):
+    """
+    Given the html content of a building listing, this function extracts the unit data.
+    """
+    unit_data = []
+
+    return unit_data
+
 
 def process_building_listing_html(soup):
     """
@@ -222,13 +232,6 @@ def process_building_listing_html(soup):
 
     # Extract the building name
     name = soup.find("h1", class_="propertyName").text.strip()
-
-    # check to make sure we don't double add this building
-    if name in buildings_seen:
-        print(f"Skipping {name} as we have already seen it.")
-        return None
-    else:
-        buildings_seen.add(name)
 
     # Extract the neighborhood
     neighborhood = soup.find("a", class_="neighborhood").text.strip()
@@ -243,13 +246,19 @@ def process_building_listing_html(soup):
     city = address_data["PlaceName"]
     state = address_data["StateName"]
 
+    # check to make sure we don't double add this building
+    if full_address in address_seen:
+        print(f"Skipping {full_address} as we have already seen it.")
+        return
+    else:
+        address_seen.add(full_address)
 
     # Extract monthly rent, bedrooms, bathrooms, square feet RANGES
-    price_bed_range_info = soup.find('ul', class_='priceBedRangeInfo')
+    price_bed_range_info = soup.find("ul", class_="priceBedRangeInfo")
     if price_bed_range_info:
-        for item in price_bed_range_info.find_all('li', class_='column'):
-            label = item.find('p', class_='rentInfoLabel')
-            detail = item.find('p', class_='rentInfoDetail')
+        for item in price_bed_range_info.find_all("li", class_="column"):
+            label = item.find("p", class_="rentInfoLabel")
+            detail = item.find("p", class_="rentInfoDetail")
             if label and detail:
                 label_text = label.text.strip()
                 detail_text = detail.text.strip()
@@ -262,7 +271,7 @@ def process_building_listing_html(soup):
                 elif label_text == "Square Feet":
                     square_feet = detail_text
 
-        # process the bedroom, bathroom, 
+        # process the bedroom, bathroom,
         beds_min, beds_max, beds_string = process_bedroom_range(bedrooms)
         baths_min, baths_max, baths_string = process_bathroom_range(bathrooms)
         sq_ft_min, sq_ft_max, sq_ft_string = process_square_feet_range(square_feet)
@@ -282,12 +291,12 @@ def process_building_listing_html(soup):
         rent_string = None
 
     # Extract year built, units, and stories using regex
-    details_container = soup.find('div', id='profileV2FeesWrapper')
+    details_container = soup.find("div", id="profileV2FeesWrapper")
     if details_container:
         details_text = details_container.text
-        year_built_match = re.search(r'Built in (\d{4})', details_text)
-        units_stories_match = re.search(r'(\d+) units/(\d+) stories', details_text)
-        
+        year_built_match = re.search(r"Built in (\d{4})", details_text)
+        units_stories_match = re.search(r"(\d+) units/(\d+) stories", details_text)
+
         if year_built_match:
             year_built = year_built_match.group(1)
         else:
@@ -306,6 +315,9 @@ def process_building_listing_html(soup):
             units = None
             stories = None
 
+    # Extract the unit data
+    unit_data = extract_unit_data(soup)
+
     data = {
         "name": name,
         "neighborhood": neighborhood,
@@ -313,35 +325,33 @@ def process_building_listing_html(soup):
         "city": city,
         "state": state,
         "zip_code": zip_code,
-
         "extracted_from": "building_listing",
-
         "rent": rent_string,  # "$1,995 - $10,730
-        "rent_min": rent_min, # 1995
-        "rent_max": rent_max, # 10730
-
-        "beds": beds_string, # "Studio - 3 beds"
-        "beds_min": beds_min, # 0 for studio
-        "beds_max": beds_max, # 3 for 3 beds
-
+        "rent_min": rent_min,  # 1995
+        "rent_max": rent_max,  # 10730
+        "beds": beds_string,  # "Studio - 3 beds"
+        "beds_min": beds_min,  # 0 for studio
+        "beds_max": beds_max,  # 3 for 3 beds
         "baths": baths_string,
         "baths_min": baths_min,
         "baths_max": baths_max,
-
         "sq_ft": sq_ft_string,
         "sq_ft_min": sq_ft_min,
         "sq_ft_max": sq_ft_max,
-
         "year_built": year_built,
         "units": units,
         "stories": stories,
+        # unit_data: TODO
     }
 
-    return data
+    print(f"Successfully added building: {full_address} with {len(unit_data)} units.")
+
+    apartments.append(data)
 
 
-
-def update_building(building_name, unit_uuid, unit_id, unit_rent, unit_beds, unit_baths, unit_sq_ft):
+def update_building(
+    building_name, unit_uuid, unit_id, unit_rent, unit_beds, unit_baths, unit_sq_ft
+):
     """
     This function updates the building data with the new unit data.
     """
@@ -374,23 +384,42 @@ def update_building(building_name, unit_uuid, unit_id, unit_rent, unit_beds, uni
             building["sq_ft_max"] = unit_sq_ft
 
         # update the building data with the new unit data
-        building["unit_data"].append({
-            "unique_id": unit_uuid,
-            "unit": unit_id,
-            "floor_plan": None,
-            "beds": unit_beds,
-            "baths": unit_baths,
-            "price": unit_rent,
-            "sq_ft": unit_sq_ft
-        })
+        building["unit_data"].append(
+            {
+                "unique_id": unit_uuid,
+                "unit": unit_id,
+                "floor_plan": None,
+                "beds": unit_beds,
+                "baths": unit_baths,
+                "price": unit_rent,
+                "sq_ft": unit_sq_ft,
+            }
+        )
 
         # add the building back to the apartments list
         apartments.append(building)
-    
-    else:
-        print(f"Could not find building {building_name} to update with unit {unit_uuid}")
 
-def add_building_and_unit(name, neighborhood, full_address, city, state, zip_code, unit_uuid, unit_id, unit_floor_plan, unit_rent, unit_beds, unit_baths, unit_sq_ft):
+    else:
+        print(
+            f"Could not find building {building_name} to update with unit {unit_uuid}"
+        )
+
+
+def add_building_and_unit(
+    name,
+    neighborhood,
+    full_address,
+    city,
+    state,
+    zip_code,
+    unit_uuid,
+    unit_id,
+    unit_floor_plan,
+    unit_rent,
+    unit_beds,
+    unit_baths,
+    unit_sq_ft,
+):
     """
     This function adds a new building and unit to the apartments list.
     """
@@ -403,21 +432,22 @@ def add_building_and_unit(name, neighborhood, full_address, city, state, zip_cod
         "city": city,
         "state": state,
         "zip_code": zip_code,
-
         "extracted_from": "individual_listings",
-
         "phone": None,
         "manager": None,
         "property_link": None,
-
         "monthly_rent_range": f"${unit_rent} - ${unit_rent}",
-        "bedrooms": f"{unit_beds} beds", # "Studio - 3 beds
+        "bedrooms": f"{unit_beds} beds",  # "Studio - 3 beds
         "bathrooms": f"{unit_baths} baths",
         "beds_min": unit_beds,
         "beds_max": unit_beds,
         "baths_min": unit_baths,
         "baths_max": unit_baths,
+        "rent_min": unit_rent,
+        "rent_max": unit_rent,
         "square_feet_range": f"{unit_sq_ft} - {unit_sq_ft} sq ft",
+        "sq_ft_min": unit_sq_ft,
+        "sq_ft_max": unit_sq_ft,
         "year_built": None,
         "units": None,
         "stories": None,
@@ -429,10 +459,13 @@ def add_building_and_unit(name, neighborhood, full_address, city, state, zip_cod
                 "beds": unit_beds,
                 "baths": unit_baths,
                 "price": unit_rent,
-                "sq_ft": unit_sq_ft
+                "sq_ft": unit_sq_ft,
             }
-        ]
+        ],
     }
+
+    address_seen.add(full_address)
+    units_seen.add(unit_uuid)
 
     # add the building to the apartments list
     apartments.append(building)
@@ -445,9 +478,25 @@ def process_single_listing_html(soup):
     # Extract the neighborhood
     neighborhood = soup.find("a", class_="neighborhood").text.strip()
 
-    full_address = soup.find("div", class_="propertyAddress").text.strip()
-    full_address = full_address.replace("Property Address:", "").strip()
-    full_address = re.sub(r"\s+", " ", full_address)
+    unit_address = soup.find("h1", class_="propertyName").text.strip()
+    property_address_container = soup.find("div", class_="propertyAddressContainer")
+    city = property_address_container.find("span").text.strip()
+    state = (
+        property_address_container.find("span", class_="stateZipContainer")
+        .find_all("span")[0]
+        .text.strip()
+    )
+    zip_code = (
+        property_address_container.find("span", class_="stateZipContainer")
+        .find_all("span")[1]
+        .text.strip()
+    )
+
+    full_address = f"{unit_address}, {city}, {state} {zip_code}"
+
+    building_address = soup.find("div", class_="propertyAddress").text.strip()
+    building_address = building_address.replace("Property Address:", "").strip()
+    building_address = re.sub(r"\s+", " ", building_address)
 
     # use usaddress to parse the address into its components
     address_data = usaddress.tag(full_address)[0]
@@ -459,11 +508,11 @@ def process_single_listing_html(soup):
     name = f"{address_data['AddressNumber']} {address_data['StreetName']} {address_data['StreetNamePostType']}"
 
     # Extract monthly rent, bedrooms, bathrooms, square feet
-    price_bed_range_info = soup.find('ul', class_='priceBedRangeInfo')
+    price_bed_range_info = soup.find("ul", class_="priceBedRangeInfo")
     if price_bed_range_info:
-        for item in price_bed_range_info.find_all('li', class_='column'):
-            label = item.find('p', class_='rentInfoLabel')
-            detail = item.find('p', class_='rentInfoDetail')
+        for item in price_bed_range_info.find_all("li", class_="column"):
+            label = item.find("p", class_="rentInfoLabel")
+            detail = item.find("p", class_="rentInfoDetail")
             if label and detail:
                 label_text = label.text.strip()
                 detail_text = detail.text.strip()
@@ -476,11 +525,17 @@ def process_single_listing_html(soup):
                 elif label_text == "Square Feet":
                     square_feet = detail_text
 
-        # process the bedroom, bathroom, rent and sq footage for an individual listing
-        beds = re.search(r'(\d+)', bedrooms)
-        baths = re.search(r'(\d+)', bathrooms)
-        sq_ft = re.search(r'(\d+)', square_feet)
-        rent = re.search(r'\$\d+', monthly_rent)
+        # Process the bedroom, bathroom, rent, and sq footage for an individual listing
+        beds_match = re.search(r"(\d+)", bedrooms)
+        baths_match = re.search(r"(\d+)", bathrooms)
+        sq_ft_match = re.search(r"(\d+)", square_feet)
+        rent_match = re.search(r"\$(\d+)", monthly_rent.replace(",", ""))
+
+        # Extract and convert the values, handling None cases
+        beds = int(beds_match.group(1)) if beds_match else None
+        baths = int(baths_match.group(1)) if baths_match else None
+        sq_ft = int(sq_ft_match.group(1)) if sq_ft_match else None
+        rent = int(rent_match.group(1)) if rent_match else None
 
     else:
         beds = None
@@ -489,45 +544,78 @@ def process_single_listing_html(soup):
         rent = None
 
     # Extract the unit id and floor plan
-    # get the unit number from the usaddress if it exists
-    
-    unit_id = address_data.get('OccupancyIdentifier')
+    unit_id = address_data.get("OccupancyIdentifier")
     unit_uuid = f"{name}-{unit_id}"
 
     # if we don't have beds, baths, sq_ft, rent, unit_id then we can't process this listing
-    if beds is None or baths is None or sq_ft is None or rent is None or unit_id is None:
-        return None
-    
-    beds = int(beds.group(1))
-    baths = float(baths.group(1))
-    sq_ft = int(sq_ft.group(1))
-    rent = int(rent.group(0).replace('$', ''))
+    if (
+        beds is None
+        or baths is None
+        or sq_ft is None
+        or rent is None
+        or unit_id is None
+    ):
+        # print out which data items were missing and the link to the listing
+        # first find out which data items are missing
+        missing_data = []
+        if beds is None:
+            missing_data.append("beds")
+        if baths is None:
+            missing_data.append("baths")
+        if sq_ft is None:
+            missing_data.append("sq_ft")
+        if rent is None:
+            missing_data.append("rent")
+        if unit_id is None:
+            missing_data.append("unit_id")
 
-    # Now let's check if we've seen this building before,        update_building(building_name=name, unit_uuid=unit_uuid, unit_id=unit_id, unit_floor_plan=unit_floor_plan, unit_rent=rent, unit_beds=beds, unit_baths=baths, unit_sq_ft=sq_ft)None
-    # else:
-    #     buildings_seen.add(name)
+        print(f"Missing data for {full_address}, {unit_id}: {', '.join(missing_data)}")
+        return
 
-    if name in buildings_seen and unit_uuid not in units_seen:
-        update_building(building_name=name, unit_uuid=unit_uuid, unit_id=unit_id, unit_rent=rent, unit_beds=beds, unit_baths=baths, unit_sq_ft=sq_ft)
+    if full_address in address_seen and unit_uuid not in units_seen:
+        update_building(
+            building_name=name,
+            unit_uuid=unit_uuid,
+            unit_id=unit_id,
+            unit_rent=rent,
+            unit_beds=beds,
+            unit_baths=baths,
+            unit_sq_ft=sq_ft,
+        )
         units_seen.add(unit_uuid)
+        print(f"Updated building: {full_address} with unit {unit_uuid}")
 
+    elif unit_uuid not in units_seen:
+        add_building_and_unit(
+            name,
+            neighborhood,
+            building_address,
+            city,
+            state,
+            zip_code,
+            unit_uuid,
+            unit_id,
+            None,
+            rent,
+            beds,
+            baths,
+            sq_ft,
+        )
+        print(f"Added new building: {full_address} with unit {unit_uuid}")
     else:
-        # want to create a new building and add it to the list
-        add_building_and_unit(address=full_address, building_name=name, unit_uuid=unit_uuid, unit_id=unit_id, unit_rent=rent, unit_beds=beds, unit_baths=baths, unit_sq_ft=sq_ft)
-
-    
-    return apartments
-
-   
+        print(f"Building and Unit already seen: {unit_uuid}")
 
 
-# test = fetch_building_data(
-#     "https://www.apartments.com/pinnacle-on-the-park-san-diego-ca/9r6e3y6/"
-# )
-
-# test = fetch_building_data("https://www.apartments.com/alx-san-diego-ca/z2bg8dz/")
-
-test = fetch_building_data("https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/")
+test = fetch_building_data(
+    "https://www.apartments.com/pinnacle-on-the-park-san-diego-ca/9r6e3y6/"
+)
+fetch_building_data(
+    "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
+)
+fetch_building_data(
+    "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
+)
+fetch_building_data("https://www.apartments.com/alx-san-diego-ca/z2bg8dz/")
 
 # json print the data
-print(json.dumps(test, indent=4))
+print(json.dumps(apartments, indent=4))
