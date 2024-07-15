@@ -4,54 +4,12 @@ import re
 from datetime import datetime
 import json
 import usaddress
-import time
-import random
-
-
-"""
-this store the apartment data which looks like this:
-
-{
-        "name": "Pinnacle on The Park",
-        "neighborhood": "East Village",
-        "address": "424 15th St, San Diego, CA 92101",
-        "city": "San Diego",
-        "state": "CA",
-        "zip_code": "92101",
-
-        
-        "phone": "(619) 773-0335",
-        "manager": null,
-        "property_link": "https://www.apartments.com/pinnacle-on-the-park-san-diego-ca/9r6e3y6/",
-
-        "monthly_rent_range": "$1,995 - $10,730",
-        "bedrooms": "Studio - 3 beds",
-        "bathrooms": "1 - 3 baths",
-        "beds_min": 0, # 0 for studio
-        "beds_max": 3, # 3 for 3 beds
-        "baths_min": 1.0, # float for 0.5 baths in places
-        "baths_max": 3.5,
-        "square_feet_range": "575 - 1,969 sq ft",
-        "year_built": "2015",
-        "units": 484,
-        "stories": 45,
-        "unit_data": [
-            {
-                "unique_id": "SPIRE 1B-1006",
-                "floor_plan": "SPIRE 1B",
-                "beds": 1,
-                "baths": 1.0,
-                "unit": "1006",
-                "price": 2455,
-                "sq_ft": 600
-            },
-            ...
-"""
-
+import math
 
 address_seen = set()
 units_seen = set()
 apartments = []
+
 
 headers = {
     "Content-Type": "application/json",
@@ -63,21 +21,93 @@ headers = {
     "Host": "www.apartments.com",
     "Origin": "https://www.apartments.com",
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
-    "Referer": "https://www.apartments.com/san-diego-ca/3/?bb=w-6873v64M7upziI",
+    "Referer": "https://www.apartments.com/san-diego-ca/",
     "Connection": "keep-alive",
     "Sec-Fetch-Dest": "empty",
-    "Cookie": "your-cookie-values",
-    "X-Requested-With": "XMLHttpRequest",
-    "X-CSRF-TOKEN": "your-csrf-token",
+    # "X-CSRF-TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3MTk5NjY3ODQsImV4cCI6MTcyMDA1MzE4NCwiaWF0IjoxNzE5OTY2Nzg0LCJpc3MiOiJodHRwczovL3d3dy5hcGFydG1lbnRzLmNvbSIsImF1ZCI6Imh0dHBzOi8vd3d3LmFwYXJ0bWVudHMuY29tIn0.ERmuWu4pbsVpUrCSja-ixyjNaDK55L57EEESLAXIDjw",
+    "Cookie": "z=1&dm=apartments.com&si=f75a506d-9abb-4885-b04a-0d10ed095a32&ss=lymkvmew&sl=5&tt=4gc&bcn=%2F%2F17de4c14.akstat.io%2F&ld=owb2; _clsk=10eehjv%7C1721024530928%7C13%7C0%7Ci.clarity.ms%2Fcollect; _gcl_au=1.1.2089699608.1720029928; _pin_unauth=dWlkPU1UVXlZamhtWldRdFkyTTVPQzAwT0RFd0xXSXlOR1F0TnpJME1XWXdOVE5sT0RkbQ; _screload=; _uetsid=ddbb6720426f11ef805aadb057620a1d; _uetvid=38fee260f2ad11ee8f97c38113b98a47; cto_bundle=_-TfQ18lMkZMQlRucG1PZnQ5cGQ2aFBPem5hZlE3dDNMdDQxZkhWbkZCc2xPSEtrNXkzSVJ2dGJDdHhUNXZWSlB1eXA4SmR4eFR0enJ5YnF6M1V5b1Y1VDl5S1I4Y0p6bjJNSVE0UHY0RWppc1dFTjFXbHMwdCUyQjYxWUlUTm5yNSUyRmpPOTRyQw; OptanonConsent=isGpcEnabled=0&datestamp=Sun+Jul+14+2024+23%3A22%3A09+GMT-0700+(Pacific+Daylight+Time)&version=202401.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=30fed092-18a3-4ce0-a41b-0abe83bfe45f&interactionCount=0&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1&AwaitingReconsent=false; _dpm_id.c51a=11d5ac65-3e8f-4893-b064-32f9f3f05d29.1712253630.13.1721024529.1720820046.1f323d0c-1759-4252-adcf-63b580a81815; _dpm_ses.c51a=*; _fbp=fb.1.1712253629442.1810098185; _ga=GA1.1.760150656.1712253629; _ga_X3LTX2PVM9=GS1.1.1721023369.17.1.1721024529.60.0.423609605; _scid_r=3073b147-2e94-4f10-b6f6-9540644d0cf1; cb=1; cul=en-US; _gid=GA1.2.2008056232.1721023370; bm_sv=71977F38930FE33289ED71DC43DC0D01~YAAQUgw0F1ydcZ+QAQAAkEEOtRgm8GcdROclSD2VxLBZ3QbtLtXN28K9F/Cyoy8EuU1VQjMU7cvid8Vc2wvU7z6hu9DYM9ZTPsLXVaifpEBVojRB4HCHTBQeuiA3JMMX8nh8EcUtSJ61kE9ONTX6VlwoxWnN+xLnPEGNjBJ/OyTFJkNdS5j++2oZH6ITbfIJiL0VFv+4O3vs6wcMRDGTey8cYnC5d7hLjpROCFWTR8gMYG5Sbwqn6QryaCPBd7ZGILcuuOU=~1; lsc=%7B%22Map%22%3A%7B%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.68352%2C%22Longitude%22%3A-117.10963%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A32.73862%2C%22Longitude%22%3A-117.17074%7D%7D%2C%22CountryCode%22%3A%22US%22%7D%2C%22Geography%22%3A%7B%22ID%22%3A%22h6emeh3%22%2C%22Display%22%3A%22San%20Diego%2C%20CA%22%2C%22GeographyType%22%3A2%2C%22Address%22%3A%7B%22City%22%3A%22San%20Diego%22%2C%22CountryCode%22%3A%22USA%22%2C%22County%22%3A%22San%20Diego%22%2C%22State%22%3A%22CA%22%2C%22MarketName%22%3A%22San%20Diego%22%2C%22DMA%22%3A%22San%20Diego%2C%20CA%22%7D%2C%22Location%22%3A%7B%22Latitude%22%3A32.825%2C%22Longitude%22%3A-117.094%7D%2C%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.53479%2C%22Longitude%22%3A-116.90572%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A33.11425%2C%22Longitude%22%3A-117.2823%7D%7D%2C%22v%22%3A23508%2C%22IsPmcSearchByCityState%22%3Afalse%7D%2C%22Listing%22%3A%7B%7D%2C%22Paging%22%3A%7B%7D%2C%22IsBoundedSearch%22%3Atrue%2C%22ResultSeed%22%3A383921%2C%22Options%22%3A0%2C%22CountryAbbreviation%22%3A%22US%22%7D; sr=%7B%22Width%22%3A1228%2C%22Height%22%3A894%2C%22PixelRatio%22%3A2%7D; uat=%7b%22VisitorId%22%3a%22a69d322d-dafe-4ee7-9e40-6123b6f5c2c2%22%2c%22VisitId%22%3a%22af7ce098-abda-4501-8edd-d5d68bb0e761%22%2c%22LastActivityDate%22%3a%222024-07-14T23%3a22%3a09.2022988-07%3a00%22%2c%22LastFrontDoor%22%3a%22APTS%22%2c%22LastSearchId%22%3a%224e02b6aa-b69f-4ef2-861f-c3a5e64e43b7%22%7d; s=; _clck=6gqxxm%7C2%7Cfnh%7C0%7C1555; _sctr=1%7C1720940400000; ak_bmsc=9388320AFB702B344FDDEC4E3FE5EEA9~000000000000000000000000000000~YAAQUgw0F+sDcZ+QAQAA3JP8tBjxbg/1BjquUKzNDSuZgr32DU4SyqqGHS0LbC0W1WxGUpKZF1BOLwHCtpSljnoHpEbvsdl/P1AiKa64ayfIo5hwxeByT92X1y+UkSUzBcaNUL1TVuXUxSolQei0L/PfxhpLKlMeZ8f3ZvyvE57iUDGWCz0p7y0NkEGTUcRh+VL52IzD4KEl00sO92qGC9sh6UMoMZ0Wvj/8sKfk7pwJunoFTiam03DCYoTmsa6054vUwZCCVLiuvqks1EcVA5Jxxqz9T+VVOJZWfhA7tKnTn3V5WbP/cEbeHI/SxCLw7fns+ZZ02PudZywIuAG2b0e9Z1v63+1fRH3fbMxjHoWSVa0tRDObkB2ozmaO6tAE+w7USEHOrW3qD8Bz3kVrsfP5NuXadgKULnwGJi43G2i9W4aKk1P/+312zmhFhOgOPARGSG7asnaYEXIcOfjaoXM=; akaalb_www_apartments_com_main=1721026969~op=ap_rent_trends_exclusions:www_apartments_com_LAX|apartments_Prd_Edge_US:www_apartments_com_LAX|~rv=69~m=www_apartments_com_LAX:0|~os=0847b47fe1c72dfaedb786f1e8b4b630~id=d095fdb8cd30f3df203518bbb14f89b1; ab=%7b%22e%22%3atrue%2c%22r%22%3a%5b%5d%7d; _scid=3073b147-2e94-4f10-b6f6-9540644d0cf1; _tt_enable_cookie=1; _ttp=34uuuFODtquELZLWjX1ldkQrjj6; afe=%7b%22e%22%3afalse%7d; fso=%7b%22e%22%3afalse%7d",
 }
 
 
-def fetch_apartment_cards():
-    """
-    This function fetches the apartment cards from the apartments.com website.
-    These cards include general information listing.
-    """
-    pass
+def fetch_apartment_cards(coordinates):
+    # {'UpperLeft': {'Latitude': 33.11425, 'Longitude': -117.2823}, 'LowerRight': {'Latitude': 33.07225, 'Longitude': -117.2403}}
+    url = "https://www.apartments.com/services/search/"
+
+    base_data = {
+        "Map": {
+            "BoundingBox": coordinates,
+            "CountryCode": "US",
+            "Shape": None,
+        },
+        "Geography": {
+            "ID": "h6emeh3",
+            "Display": "San Diego, CA",
+            "GeographyType": 2,
+            "Address": {
+                "City": "San Diego",
+                "CountryCode": "USA",
+                "County": "San Diego",
+                "State": "CA",
+                "MarketName": "San Diego",
+                "DMA": "San Diego, CA",
+            },
+            "Location": {"Latitude": 32.825, "Longitude": -117.094},
+            # "BoundingBox": {
+            #     "LowerRight": {"Latitude": 32.53479, "Longitude": -116.90572},
+            #     "UpperLeft": {"Latitude": 33.11425, "Longitude": -117.2823},
+            # },
+            "v": 23508,
+            "IsPmcSearchByCityState": False,
+        },
+        "Listing": {},
+        "Paging": {"Page": None},
+        "IsBoundedSearch": True,
+        "ResultSeed": 969994,
+        "Options": 0,
+        "CountryAbbreviation": "US",
+    }
+
+    all_results = []
+
+    current_page = 1
+    while True:
+        data = base_data.copy()
+        data["Paging"] = {"Page": str(current_page)}
+
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+
+        if response.status_code == 200:
+            result = response.json()
+            all_results.append(result)
+
+            print(f"Page {current_page} fetched successfully.")
+
+            if not result.get("MetaState").get("PageNextUrl"):
+                print(f"Stopping at page {current_page} as there is no 'PageNextUrl'.")
+                break
+        else:
+            print(
+                f"Request failed for page {current_page} with status code {response.status_code}"
+            )
+            break
+
+        current_page += 1
+
+    property_urls = []
+    for result in all_results:
+        soup = BeautifulSoup(result["PlacardState"]["HTML"], "html.parser")
+
+        # Find all the apartment listings
+        listings = soup.find_all("article", class_="placard")
+
+        # Extract the data
+        for listing in listings:
+            property_link = listing.get("data-url")
+            # property_urls.append(property_link) first verify this exists
+            if property_link:
+                property_urls.append(property_link)
+
+    return property_urls
 
 
 def fetch_building_data(listing_url):
@@ -90,26 +120,28 @@ def fetch_building_data(listing_url):
 
     Then it returns the complete building data.
     """
+    try:
+        response = requests.get(listing_url, headers=headers, timeout=30)
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed for {listing_url} with exception: {e}")
+        return
 
-    # Fetch the page of the listing URL
-    response = requests.get(listing_url, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
-
-    """
-    if the html class pricingGridTitleBlock in it:
-    <div class="pricingGridTitleBlock">
-        <h2 class="availabilityTitle sectionTitle">Pricing &amp; Floor Plans</h2>
-    </div>
-
-    then we know this listing is for a building with different units in it.
-    """
 
     if soup.find("div", class_="pricingGridTitleBlock"):
         # This is a building with multiple units in it
-        process_building_listing_html(soup)
+        try:
+            process_building_listing_html(soup)
+        except Exception as e:
+            print(f"---Failed to process building listing: {e}---")
+            print(listing_url)
     else:
         # This is a single unit listing
-        process_single_listing_html(soup)
+        try:
+            process_single_listing_html(soup)
+        except Exception as e:
+            print(f"---Failed to process single listing: {e}---")
+            print(listing_url)
 
 
 def process_bedroom_range(bedrooms):
@@ -215,13 +247,62 @@ def process_rent_range(rent_range):
 
 
 def extract_unit_data(soup):
-    """
-    Given the html content of a building listing, this function extracts the unit data.
-    """
-    unit_data = []
+    units = []
+    pricing_grid_items = soup.find_all(
+        "div", class_="pricingGridItem multiFamily hasUnitGrid"
+    )
 
-    return unit_data
+    for grid_item in pricing_grid_items:
+        floor_plan = grid_item.find("span", class_="modelName").text.strip()
+        rent_range = grid_item.find("span", class_="rentLabel").text.strip()
+        details = grid_item.find("h4", class_="detailsLabel").text.strip().split(",")
+        beds = details[0].strip()
+        baths = details[1].strip()
+        # sq_ft = details[2].strip()
 
+        unit_list = grid_item.find_all("li", class_="unitContainer js-unitContainer")
+
+        for unit in unit_list:
+            unit_number = unit.find("span", title=True).text.strip()
+            price_element = unit.find("span", {"data-monetaryunittype": "USD"})
+            if price_element:
+                price = price_element.text.strip()
+            else:
+                price = None
+            sq_ft_unit = unit.find("div", class_="sqftColumn column").text.strip()
+
+            availability_element = unit.find("span", class_="dateAvailable")
+            if availability_element:
+                availability = availability_element.text.strip()
+            else:
+                availability = None
+
+            # Ensure no duplication by creating a unique identifier for each unit
+            unique_id = f"{floor_plan}-{unit_number}"
+            if unique_id not in [u["unique_id"] for u in units]:
+                units.append(
+                    {
+                        "unique_id": unique_id,
+                        "floor_plan": floor_plan,
+                        "beds": "Studio" if beds == "Studio" else int(beds.split()[0]),
+                        "baths": float(baths.split()[0]),
+                        "unit": unit_number,
+                        "price": (
+                            None
+                            if price == "Call for Rent"
+                            else int(price.replace("$", "").replace(",", ""))
+                        ),
+                        "sq_ft": int(sq_ft_unit.split("\n")[1].replace(",", "")),
+                    }
+                )
+
+    return units
+
+def clean_address(address):
+        pattern = r"(\b[\w\s]+(?:\b\w+\b))(?=.*\1)"
+        cleaned_address = re.sub(pattern, '', address).strip(', ')
+
+        return cleaned_address
 
 def process_building_listing_html(soup):
     """
@@ -239,6 +320,7 @@ def process_building_listing_html(soup):
     full_address = soup.find("div", class_="propertyAddress").text.strip()
     full_address = full_address.replace("Property Address:", "").strip()
     full_address = re.sub(r"\s+", " ", full_address)
+    full_address = clean_address(full_address)
 
     # use usaddress to parse the address into its components
     address_data = usaddress.tag(full_address)[0]
@@ -341,7 +423,7 @@ def process_building_listing_html(soup):
         "year_built": year_built,
         "units": units,
         "stories": stories,
-        # unit_data: TODO
+        "unit_data": unit_data,
     }
 
     print(f"Successfully added building: {full_address} with {len(unit_data)} units.")
@@ -498,6 +580,8 @@ def process_single_listing_html(soup):
     building_address = building_address.replace("Property Address:", "").strip()
     building_address = re.sub(r"\s+", " ", building_address)
 
+    full_address = clean_address(full_address)
+
     # use usaddress to parse the address into its components
     address_data = usaddress.tag(full_address)[0]
     zip_code = address_data["ZipCode"]
@@ -606,16 +690,148 @@ def process_single_listing_html(soup):
         print(f"Building and Unit already seen: {unit_uuid}")
 
 
-test = fetch_building_data(
-    "https://www.apartments.com/pinnacle-on-the-park-san-diego-ca/9r6e3y6/"
-)
-fetch_building_data(
-    "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
-)
-fetch_building_data(
-    "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
-)
-fetch_building_data("https://www.apartments.com/alx-san-diego-ca/z2bg8dz/")
+def split_bounding_box(bounding_box, max_grid_width=0.05, max_grid_height=0.05):
+    lat_change = (
+        bounding_box["UpperLeft"]["Latitude"] - bounding_box["LowerRight"]["Latitude"]
+    )
+    long_change = (
+        bounding_box["UpperLeft"]["Longitude"] - bounding_box["LowerRight"]["Longitude"]
+    )
 
-# json print the data
-print(json.dumps(apartments, indent=4))
+    num_lat_grids = math.ceil(abs(lat_change) / max_grid_height)
+    num_long_grids = math.ceil(abs(long_change) / max_grid_width)
+
+    grids = []
+
+    for lat_num in range(num_lat_grids):
+        for long_num in range(num_long_grids):
+            if bounding_box["UpperLeft"]["Latitude"] > 0:
+                upper_left_lat = bounding_box["UpperLeft"]["Latitude"] - (
+                    lat_num * max_grid_height
+                )
+                lower_right_lat = upper_left_lat - max_grid_height
+            else:
+                upper_left_lat = bounding_box["UpperLeft"]["Latitude"] + (
+                    lat_num * max_grid_height
+                )
+                lower_right_lat = upper_left_lat + max_grid_height
+
+            if bounding_box["UpperLeft"]["Longitude"] > 0:
+                upper_left_long = bounding_box["UpperLeft"]["Longitude"] - (
+                    long_num * max_grid_width
+                )
+                lower_right_long = upper_left_long - max_grid_width
+            else:
+                upper_left_long = bounding_box["UpperLeft"]["Longitude"] + (
+                    long_num * max_grid_width
+                )
+                lower_right_long = upper_left_long + max_grid_width
+
+            grids.append(
+                {
+                    "UpperLeft": {
+                        "Latitude": upper_left_lat,
+                        "Longitude": upper_left_long,
+                    },
+                    "LowerRight": {
+                        "Latitude": lower_right_lat,
+                        "Longitude": lower_right_long,
+                    },
+                }
+            )
+
+    return grids
+
+
+def fetch_san_diego_data():
+    current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+    # bounding_box = {
+    #     "LowerRight": {"Latitude": 32.53479, "Longitude": -116.90572},
+    #     "UpperLeft": {"Latitude": 33.11425, "Longitude": -117.2823},
+    # }
+
+    # grids = split_bounding_box(bounding_box)
+
+    # # fetch the data for each grid
+    # apartment_urls = []
+    # for grid in grids:
+    #     new_urls = fetch_apartment_cards(grid)
+    #     apartment_urls.append(new_urls)
+
+    # # take the urls and remove duplicates
+    # apartment_urls = [list(set(urls)) for urls in apartment_urls]
+
+    # # save the current data of apartment urls
+    # with open(f"data/apartment_urls_{current_time}.json", "w") as f:
+    #     json.dump(apartment_urls, f, indent=4)
+
+    # read in apartment_urls from apartments_urls_test.json:
+    # [
+    #    "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/",,...
+    # ]
+
+    with open("data/apartment_urls_test.json", "r") as f:
+        apartment_urls = json.load(f)
+
+
+    # fetch the data for each apartment save every 100 listings
+    for i, url in enumerate(apartment_urls):
+        fetch_building_data(url)
+        if i % 100 == 0:
+            with open(f"data/apartments_{current_time}.json", "w") as f:
+                json.dump(apartments, f, indent=4)
+
+
+    with open(f"data/apartments_COMPLETE_{current_time}.json", "w") as f:
+        json.dump(apartments, f, indent=4)
+
+    print(f"Successfully fetched data for {len(apartments)} listings.")
+
+
+# test = fetch_building_data(
+#     "https://www.apartments.com/pinnacle-on-the-park-san-diego-ca/9r6e3y6/"
+# )
+# fetch_building_data(
+#     "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
+# )
+# fetch_building_data(
+#     "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/"
+# )
+# fetch_building_data("https://www.apartments.com/alx-san-diego-ca/z2bg8dz/")
+
+
+def test_fetch_two_grids():
+    bounding_box = {
+        "LowerRight": {"Latitude": 32.53479, "Longitude": -116.90572},
+        "UpperLeft": {"Latitude": 33.11425, "Longitude": -117.2823},
+    }
+
+    grids = split_bounding_box(bounding_box)
+
+    # fetch the data for each grid
+    apartment_urls = []
+    for grid in grids:
+        new_urls = fetch_apartment_cards(grid)
+        apartment_urls.append(new_urls)
+
+    # take the urls and remove duplicates
+    # apartment_urls = [list(set(urls)) for urls in apartment_urls]
+
+    # apartments is a list of lists, convert to a single list
+    apartment_urls = [url for urls in apartment_urls for url in urls]
+    # remove duplicates
+    apartment_urls = list(set(apartment_urls))
+    # save as a test file:
+    with open("data/apartment_urls_test.json", "w") as f:
+        json.dump(apartment_urls, f, indent=4)
+
+
+
+fetch_san_diego_data()
+
+
+current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+with open(f"data/apartments_{current_time}.json", "w") as f:
+    json.dump(apartments, f, indent=4)
