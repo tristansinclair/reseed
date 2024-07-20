@@ -5,6 +5,8 @@ from datetime import datetime
 import json
 import usaddress
 import math
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 
 address_seen = set()
 units_seen = set()
@@ -24,8 +26,8 @@ headers = {
     "Referer": "https://www.apartments.com/san-diego-ca/",
     "Connection": "keep-alive",
     "Sec-Fetch-Dest": "empty",
-    # "X-CSRF-TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3MTk5NjY3ODQsImV4cCI6MTcyMDA1MzE4NCwiaWF0IjoxNzE5OTY2Nzg0LCJpc3MiOiJodHRwczovL3d3dy5hcGFydG1lbnRzLmNvbSIsImF1ZCI6Imh0dHBzOi8vd3d3LmFwYXJ0bWVudHMuY29tIn0.ERmuWu4pbsVpUrCSja-ixyjNaDK55L57EEESLAXIDjw",
-    "Cookie": "z=1&dm=apartments.com&si=f75a506d-9abb-4885-b04a-0d10ed095a32&ss=lymkvmew&sl=5&tt=4gc&bcn=%2F%2F17de4c14.akstat.io%2F&ld=owb2; _clsk=10eehjv%7C1721024530928%7C13%7C0%7Ci.clarity.ms%2Fcollect; _gcl_au=1.1.2089699608.1720029928; _pin_unauth=dWlkPU1UVXlZamhtWldRdFkyTTVPQzAwT0RFd0xXSXlOR1F0TnpJME1XWXdOVE5sT0RkbQ; _screload=; _uetsid=ddbb6720426f11ef805aadb057620a1d; _uetvid=38fee260f2ad11ee8f97c38113b98a47; cto_bundle=_-TfQ18lMkZMQlRucG1PZnQ5cGQ2aFBPem5hZlE3dDNMdDQxZkhWbkZCc2xPSEtrNXkzSVJ2dGJDdHhUNXZWSlB1eXA4SmR4eFR0enJ5YnF6M1V5b1Y1VDl5S1I4Y0p6bjJNSVE0UHY0RWppc1dFTjFXbHMwdCUyQjYxWUlUTm5yNSUyRmpPOTRyQw; OptanonConsent=isGpcEnabled=0&datestamp=Sun+Jul+14+2024+23%3A22%3A09+GMT-0700+(Pacific+Daylight+Time)&version=202401.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=30fed092-18a3-4ce0-a41b-0abe83bfe45f&interactionCount=0&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1&AwaitingReconsent=false; _dpm_id.c51a=11d5ac65-3e8f-4893-b064-32f9f3f05d29.1712253630.13.1721024529.1720820046.1f323d0c-1759-4252-adcf-63b580a81815; _dpm_ses.c51a=*; _fbp=fb.1.1712253629442.1810098185; _ga=GA1.1.760150656.1712253629; _ga_X3LTX2PVM9=GS1.1.1721023369.17.1.1721024529.60.0.423609605; _scid_r=3073b147-2e94-4f10-b6f6-9540644d0cf1; cb=1; cul=en-US; _gid=GA1.2.2008056232.1721023370; bm_sv=71977F38930FE33289ED71DC43DC0D01~YAAQUgw0F1ydcZ+QAQAAkEEOtRgm8GcdROclSD2VxLBZ3QbtLtXN28K9F/Cyoy8EuU1VQjMU7cvid8Vc2wvU7z6hu9DYM9ZTPsLXVaifpEBVojRB4HCHTBQeuiA3JMMX8nh8EcUtSJ61kE9ONTX6VlwoxWnN+xLnPEGNjBJ/OyTFJkNdS5j++2oZH6ITbfIJiL0VFv+4O3vs6wcMRDGTey8cYnC5d7hLjpROCFWTR8gMYG5Sbwqn6QryaCPBd7ZGILcuuOU=~1; lsc=%7B%22Map%22%3A%7B%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.68352%2C%22Longitude%22%3A-117.10963%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A32.73862%2C%22Longitude%22%3A-117.17074%7D%7D%2C%22CountryCode%22%3A%22US%22%7D%2C%22Geography%22%3A%7B%22ID%22%3A%22h6emeh3%22%2C%22Display%22%3A%22San%20Diego%2C%20CA%22%2C%22GeographyType%22%3A2%2C%22Address%22%3A%7B%22City%22%3A%22San%20Diego%22%2C%22CountryCode%22%3A%22USA%22%2C%22County%22%3A%22San%20Diego%22%2C%22State%22%3A%22CA%22%2C%22MarketName%22%3A%22San%20Diego%22%2C%22DMA%22%3A%22San%20Diego%2C%20CA%22%7D%2C%22Location%22%3A%7B%22Latitude%22%3A32.825%2C%22Longitude%22%3A-117.094%7D%2C%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.53479%2C%22Longitude%22%3A-116.90572%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A33.11425%2C%22Longitude%22%3A-117.2823%7D%7D%2C%22v%22%3A23508%2C%22IsPmcSearchByCityState%22%3Afalse%7D%2C%22Listing%22%3A%7B%7D%2C%22Paging%22%3A%7B%7D%2C%22IsBoundedSearch%22%3Atrue%2C%22ResultSeed%22%3A383921%2C%22Options%22%3A0%2C%22CountryAbbreviation%22%3A%22US%22%7D; sr=%7B%22Width%22%3A1228%2C%22Height%22%3A894%2C%22PixelRatio%22%3A2%7D; uat=%7b%22VisitorId%22%3a%22a69d322d-dafe-4ee7-9e40-6123b6f5c2c2%22%2c%22VisitId%22%3a%22af7ce098-abda-4501-8edd-d5d68bb0e761%22%2c%22LastActivityDate%22%3a%222024-07-14T23%3a22%3a09.2022988-07%3a00%22%2c%22LastFrontDoor%22%3a%22APTS%22%2c%22LastSearchId%22%3a%224e02b6aa-b69f-4ef2-861f-c3a5e64e43b7%22%7d; s=; _clck=6gqxxm%7C2%7Cfnh%7C0%7C1555; _sctr=1%7C1720940400000; ak_bmsc=9388320AFB702B344FDDEC4E3FE5EEA9~000000000000000000000000000000~YAAQUgw0F+sDcZ+QAQAA3JP8tBjxbg/1BjquUKzNDSuZgr32DU4SyqqGHS0LbC0W1WxGUpKZF1BOLwHCtpSljnoHpEbvsdl/P1AiKa64ayfIo5hwxeByT92X1y+UkSUzBcaNUL1TVuXUxSolQei0L/PfxhpLKlMeZ8f3ZvyvE57iUDGWCz0p7y0NkEGTUcRh+VL52IzD4KEl00sO92qGC9sh6UMoMZ0Wvj/8sKfk7pwJunoFTiam03DCYoTmsa6054vUwZCCVLiuvqks1EcVA5Jxxqz9T+VVOJZWfhA7tKnTn3V5WbP/cEbeHI/SxCLw7fns+ZZ02PudZywIuAG2b0e9Z1v63+1fRH3fbMxjHoWSVa0tRDObkB2ozmaO6tAE+w7USEHOrW3qD8Bz3kVrsfP5NuXadgKULnwGJi43G2i9W4aKk1P/+312zmhFhOgOPARGSG7asnaYEXIcOfjaoXM=; akaalb_www_apartments_com_main=1721026969~op=ap_rent_trends_exclusions:www_apartments_com_LAX|apartments_Prd_Edge_US:www_apartments_com_LAX|~rv=69~m=www_apartments_com_LAX:0|~os=0847b47fe1c72dfaedb786f1e8b4b630~id=d095fdb8cd30f3df203518bbb14f89b1; ab=%7b%22e%22%3atrue%2c%22r%22%3a%5b%5d%7d; _scid=3073b147-2e94-4f10-b6f6-9540644d0cf1; _tt_enable_cookie=1; _ttp=34uuuFODtquELZLWjX1ldkQrjj6; afe=%7b%22e%22%3afalse%7d; fso=%7b%22e%22%3afalse%7d",
+    # "X-CSRF-TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3MjEwNzUwMTcsImV4cCI6MTcyMTE2MTQxNywiaWF0IjoxNzIxMDc1MDE3LCJpc3MiOiJodHRwczovL3d3dy5hcGFydG1lbnRzLmNvbSIsImF1ZCI6Imh0dHBzOi8vd3d3LmFwYXJ0bWVudHMuY29tIn0.ygrHVFam7H-vx3SCut42BOs5Gho6yEWjsD8CrcVhUok",
+    "Cookie": "sr=%7B%22Width%22%3A1228%2C%22Height%22%3A894%2C%22PixelRatio%22%3A2%7D; _pin_unauth=dWlkPU1UVXlZamhtWldRdFkyTTVPQzAwT0RFd0xXSXlOR1F0TnpJME1XWXdOVE5sT0RkbQ; _screload=; _uetsid=ddbb6720426f11ef805aadb057620a1d; _uetvid=38fee260f2ad11ee8f97c38113b98a47; bm_sv=35BC0D624A11DB41DA54C9AEF0956F86~YAAQSww0F8xc5rSQAQAArbEQuBhLUSgQOR1+NkOJz9RY2CIjiFAqilfOaGXOsyx+YmsKGwM/VVHG/NSVRk2at7n/frcm50Cp5czgprROClqikYYs9yPwOFR0T/9YuxT2wrW49TI4CUwu8x09EIa9q0OEJyvJIisLF4qnT3/780y1YdxfbkT+BVwPPV8kAWSK4vEr6rZDhg6kbumzm0X/UX6uiyAyNb74mstbu0WWYN9WUKjfkHDdDhDOR2nhiIzQrVvgYLU=~1; cto_bundle=Jxtan18lMkZMQlRucG1PZnQ5cGQ2aFBPem5hZlZ5OElHMkRNZlNCS3VYNzJNQzE3QzBMbW85R08zSzhEUVAzdHdFckZkVnZTWThmbDA1aTNleEhDbWR0NUVLVjgzVzhFT1FsN0RJOE9uZWh0aXppQVptSlVPMmNDa01tWUVoQ1Bpanl6WXc1; tfpsi=2c872130-d0bc-4ac4-817f-6838faf90fbd; cb=1; cul=en-US; OptanonConsent=isGpcEnabled=0&datestamp=Mon+Jul+15+2024+13%3A23%3A38+GMT-0700+(Pacific+Daylight+Time)&version=202401.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=30fed092-18a3-4ce0-a41b-0abe83bfe45f&interactionCount=0&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1&AwaitingReconsent=false; _dpm_id.c51a=11d5ac65-3e8f-4893-b064-32f9f3f05d29.1712253630.15.1721075018.1721031197.a23e0bb4-b201-4cf8-a2a5-adee96acecba; _dpm_ses.c51a=*; _fbp=fb.1.1712253629442.1810098185; _ga=GA1.1.760150656.1712253629; _ga_X3LTX2PVM9=GS1.1.1721072799.19.1.1721075018.53.0.1613054028; _gcl_au=1.1.2089699608.1720029928; _gid=GA1.2.2008056232.1721023370; _scid_r=3073b147-2e94-4f10-b6f6-9540644d0cf1; lsc=%7B%22Map%22%3A%7B%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.53479%2C%22Longitude%22%3A-116.90572%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A33.11425%2C%22Longitude%22%3A-117.2823%7D%7D%2C%22CountryCode%22%3A%22US%22%7D%2C%22Geography%22%3A%7B%22ID%22%3A%22h6emeh3%22%2C%22Display%22%3A%22San%20Diego%2C%20CA%22%2C%22GeographyType%22%3A2%2C%22Address%22%3A%7B%22City%22%3A%22San%20Diego%22%2C%22CountryCode%22%3A%22USA%22%2C%22County%22%3A%22San%20Diego%22%2C%22State%22%3A%22CA%22%2C%22MarketName%22%3A%22San%20Diego%22%2C%22DMA%22%3A%22San%20Diego%2C%20CA%22%7D%2C%22Location%22%3A%7B%22Latitude%22%3A32.825%2C%22Longitude%22%3A-117.094%7D%2C%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.53479%2C%22Longitude%22%3A-116.90572%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A33.11425%2C%22Longitude%22%3A-117.2823%7D%7D%2C%22v%22%3A23508%2C%22IsPmcSearchByCityState%22%3Afalse%7D%2C%22Listing%22%3A%7B%22Style%22%3A2%7D%2C%22Paging%22%3A%7B%7D%2C%22ResultSeed%22%3A184765%2C%22Options%22%3A0%2C%22CountryAbbreviation%22%3A%22US%22%7D; _dd_s=rum=0&expire=1721075918913; RT='sl=d&ss=lynevtdx&tt=td9&z=1&dm=apartments.com&si=f75a506d-9abb-4885-b04a-0d10ed095a32&bcn=%2F%2F17de4c1a.akstat.io%2F'; uat=%7B%22VisitorId%22%3A%22a69d322d-dafe-4ee7-9e40-6123b6f5c2c2%22%2C%22VisitId%22%3A%2264fa7e76-570b-479e-82f9-657277df38c1%22%2C%22LastActivityDate%22%3A%222024-07-15T16%3A23%3A34.3887772-04%3A00%22%2C%22LastFrontDoor%22%3A%22APTS%22%2C%22LastSearchId%22%3A%228B02DDE1-3EC3-49D5-BDA7-D3445C917677%22%7D; btid=14kx7p4; _clsk=7ywstd%7C1721075015346%7C6%7C0%7Co.clarity.ms%2Fcollect; _gat=1; ak_bmsc=7A4FA2494DDC424E9DB152A713DB2D8A~000000000000000000000000000000~YAAQSww0F+oM3LSQAQAATCrutxhRA6DTx559W+7pc2pS8awb9n3Ylx1bcjaSGrvROGcHOxG8vT/lg55+Kw19hFdoSAo5Py/29LgDIkJp6bvZEKV+vYgpdcDK01ReoFjApO4xy5vzzO1tHcmfkQ8UefLZ+FV2vOPhswzcuASTis8Oh5O8vnhUPP8/Bxcp99oPBjxAZy8NHTFwxfIijZZLoOG+RqJkk1AW0Ygy2d0r8Q9kzSxNyxmxrfVcISwaDAaLbGROGezH++x9lmsNIVvyJdBx3jYsmv33HoKTMdizak/iB4opqdlKQH54pnoKbCwDuok4mcagVrZ1D9fSv7F6Xop1YS0qVVxB2FEpF8A8IxZ59czT4c1HJOV1UXwjE21ZBmYGJIOIj7eeJk95pofZzcLVOf+ARmnAJI2YwwBQoH6lTmVk8RsOUWUEx3z3rPDw4cseFfonaYmjfZeokXQgAFPJmA==; akaalb_www_apartments_com_main=1721076356~op=ap_rent_trends_exclusions:www_apartments_com_RESTON|apartments_Prd_Edge_US:www_apartments_com_RESTON|~rv=32~m=www_apartments_com_RESTON:0|~os=0847b47fe1c72dfaedb786f1e8b4b630~id=541b8ef0685b855f059bd42d1c9e79d9; gip=%7b%22Display%22%3a%22Santa+Clara%2c+CA%22%2c%22GeographyType%22%3a2%2c%22Address%22%3a%7b%22City%22%3a%22Santa+Clara%22%2c%22CountryCode%22%3a%22US%22%2c%22State%22%3a%22CA%22%7d%2c%22Location%22%3a%7b%22Latitude%22%3a37.3519%2c%22Longitude%22%3a-121.952%7d%2c%22IsPmcSearchByCityState%22%3afalse%7d; s=; _clck=6gqxxm%7C2%7Cfnh%7C0%7C1555; _sctr=1%7C1720940400000; ab=%7b%22e%22%3atrue%2c%22r%22%3a%5b%5d%7d; _scid=3073b147-2e94-4f10-b6f6-9540644d0cf1; _tt_enable_cookie=1; _ttp=34uuuFODtquELZLWjX1ldkQrjj6; afe=%7b%22e%22%3afalse%7d; fso=%7b%22e%22%3afalse%7d",
 }
 
 
@@ -141,6 +143,7 @@ def fetch_building_data(listing_url):
             process_single_listing_html(soup)
         except Exception as e:
             print(f"---Failed to process single listing: {e}---")
+            # Show more detail about where the error occurred
             print(listing_url)
 
 
@@ -150,7 +153,7 @@ def process_bedroom_range(bedrooms):
         return None, None, None
 
     # Handle variations and convert 'Studio' to 0
-    if "Studio" in bedrooms:
+    if "Studio" in bedrooms or "Studio bd" in bedrooms or "Studio bed" in bedrooms:
         beds_min = 0
     else:
         beds_min = None
@@ -299,6 +302,39 @@ def extract_unit_data(soup):
     return units
 
 def clean_address(address):
+        # standardize all street, circles, courts, etc
+        # handle all upper/lower cases, iterate through them in a list
+        address = address.lower()
+        address = address.replace("st", "street")
+        address = address.replace("rd", "road")
+        address = address.replace("ave", "avenue")
+        address = address.replace("blvd", "boulevard")
+        address = address.replace("dr", "drive")
+        address = address.replace("ln", "lane")
+        address = address.replace("ct", "court")
+        address = address.replace("pl", "place")
+        address = address.replace("cir", "circle")
+        address = address.replace("sq", "square")
+        address = address.replace("trl", "trail")
+        address = address.replace("ter", "terrace")
+        address = address.replace("pkwy", "parkway")
+        address = address.replace("hwy", "highway")
+        address = address.replace("expwy", "expressway")
+        address = address.replace("st.", "street")
+        address = address.replace("rd.", "road")
+        address = address.replace("ave.", "avenue")
+        address = address.replace("blvd.", "boulevard")
+        address = address.replace("dr.", "drive")
+        address = address.replace("ln.", "lane")
+        address = address.replace("ct.", "court")
+        address = address.replace("pl.", "place")
+        address = address.replace("cir.", "circle")
+        address = address.replace("sq.", "square")
+        address = address.replace("trl.", "trail")
+        address = address.replace("ter.", "terrace")
+        address = address.replace("pkwy.", "parkway")
+        address = address.replace("hwy.", "highway")
+
         pattern = r"(\b[\w\s]+(?:\b\w+\b))(?=.*\1)"
         cleaned_address = re.sub(pattern, '', address).strip(', ')
 
@@ -400,6 +436,11 @@ def process_building_listing_html(soup):
     # Extract the unit data
     unit_data = extract_unit_data(soup)
 
+    # get the coordinates for the address
+    print(f"Getting coordinates for {full_address}")
+    lat, lon = get_lat_lon_from_address(full_address)
+    print(f"Coordinates for {full_address}: {lat}, {lon}")
+
     data = {
         "name": name,
         "neighborhood": neighborhood,
@@ -407,6 +448,7 @@ def process_building_listing_html(soup):
         "city": city,
         "state": state,
         "zip_code": zip_code,
+        "coordinates": {"lat": lat, "lon": lon},
         "extracted_from": "building_listing",
         "rent": rent_string,  # "$1,995 - $10,730
         "rent_min": rent_min,  # 1995
@@ -429,7 +471,6 @@ def process_building_listing_html(soup):
     print(f"Successfully added building: {full_address} with {len(unit_data)} units.")
 
     apartments.append(data)
-
 
 def update_building(
     building_name, unit_uuid, unit_id, unit_rent, unit_beds, unit_baths, unit_sq_ft
@@ -486,7 +527,6 @@ def update_building(
             f"Could not find building {building_name} to update with unit {unit_uuid}"
         )
 
-
 def add_building_and_unit(
     name,
     neighborhood,
@@ -506,6 +546,9 @@ def add_building_and_unit(
     This function adds a new building and unit to the apartments list.
     """
 
+    # get coordinates for the address
+    lat, lon = get_lat_lon_from_address(full_address)
+
     # create a new building with the unit data
     building = {
         "name": name,
@@ -514,6 +557,7 @@ def add_building_and_unit(
         "city": city,
         "state": state,
         "zip_code": zip_code,
+        "coordinates": {"lat": lat, "lon": lon},
         "extracted_from": "individual_listings",
         "phone": None,
         "manager": None,
@@ -551,7 +595,6 @@ def add_building_and_unit(
 
     # add the building to the apartments list
     apartments.append(building)
-
 
 def process_single_listing_html(soup):
     """
@@ -610,13 +653,21 @@ def process_single_listing_html(soup):
                     square_feet = detail_text
 
         # Process the bedroom, bathroom, rent, and sq footage for an individual listing
-        beds_match = re.search(r"(\d+)", bedrooms)
+        # beds_match = re.search(r"(\d+)", bedrooms)
         baths_match = re.search(r"(\d+)", bathrooms)
         sq_ft_match = re.search(r"(\d+)", square_feet)
         rent_match = re.search(r"\$(\d+)", monthly_rent.replace(",", ""))
 
+        # Process the bedroom, bathroom, rent, and sq footage for an individual listing
+        if bedrooms.lower() == "studio" or bedrooms.lower() == "studio bd" or bedrooms.lower() == "studio bed":
+            beds = 0
+        else:
+            beds_match = re.search(r"(\d+)", bedrooms)
+            beds = int(beds_match.group(1)) if beds_match else None
+
+
         # Extract and convert the values, handling None cases
-        beds = int(beds_match.group(1)) if beds_match else None
+        # beds = int(beds_match.group(1)) if beds_match else None
         baths = int(baths_match.group(1)) if baths_match else None
         sq_ft = int(sq_ft_match.group(1)) if sq_ft_match else None
         rent = int(rent_match.group(1)) if rent_match else None
@@ -628,7 +679,9 @@ def process_single_listing_html(soup):
         rent = None
 
     # Extract the unit id and floor plan
-    unit_id = address_data.get("OccupancyIdentifier")
+    # Extract the unit id and floor plan
+    unit_id = address_data.get("OccupancyIdentifier") or address_data.get("AddressNumber")
+    # print(address_data)
     unit_uuid = f"{name}-{unit_id}"
 
     # if we don't have beds, baths, sq_ft, rent, unit_id then we can't process this listing
@@ -689,7 +742,6 @@ def process_single_listing_html(soup):
     else:
         print(f"Building and Unit already seen: {unit_uuid}")
 
-
 def split_bounding_box(bounding_box, max_grid_width=0.05, max_grid_height=0.05):
     lat_change = (
         bounding_box["UpperLeft"]["Latitude"] - bounding_box["LowerRight"]["Latitude"]
@@ -742,6 +794,28 @@ def split_bounding_box(bounding_box, max_grid_width=0.05, max_grid_height=0.05):
 
     return grids
 
+
+def get_lat_lon_from_address(address):
+    """
+    This function takes an address as input and returns the latitude and longitude
+    using the Nominatim geocoder from the geopy library.
+
+    Parameters:
+    address (str): The address to geocode.
+
+    Returns:
+    tuple: A tuple containing the latitude and longitude of the address.
+    """
+    geolocator = Nominatim(user_agent="Geopy Library")
+    try:
+        location = geolocator.geocode(address)
+        if location:
+            return location.latitude, location.longitude
+        else:
+            return None, None
+    except GeocoderTimedOut:
+        print(f"Geocoder Timed Out for address: {address}")
+        return None, None
 
 def fetch_san_diego_data():
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -829,6 +903,9 @@ def test_fetch_two_grids():
 
 
 fetch_san_diego_data()
+
+# fetch_building_data("https://www.apartments.com/3034-beech-st-san-diego-ca-unit-3034-beech-st/mm816kj/")
+# fetch_building_data("https://www.apartments.com/6545-oakridge-road-san-diego-ca/14kx7p4/")
 
 
 current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")

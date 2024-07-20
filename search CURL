@@ -1,0 +1,28 @@
+curl 'https://www.apartments.com/apartments-condos-townhomes/san-diego-ca/?bb=l5qu05s_4M6y-rkJ' \
+-X 'GET' \
+-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+-H 'Sec-Fetch-Site: same-origin' \
+-H 'Cookie: _clsk=1nvas6u%7C1720819387387%7C22%7C0%7Cv.clarity.ms%2Fcollect; _fbp=fb.1.1712253629442.1810098185; _ga_X3LTX2PVM9=GS1.1.1720819259.16.1.1720819387.56.0.887553920; _gat=1; bm_sv=ADE6B80DD5D3BEB0C773FF15DA6FBC84~YAAQSww0F1P2uaWQAQAAywrUqBhFje3ux1mj4zBqoxqbDwjlB8zWba4PhbnDV9ybJXa+KgzBHqH6WWAsaJlHVP2ZtjoKfQkxg/b8OYyRY9cKDM6JU0fQp1wCTkmCuRck04iUm4ng/HT9R8mUFZ+lQW0WMUOGMlwiT7IuFQRMJByQ6Hl0gI359DgmauwDq8LyWGR4O6RUSMUPoIim3P1oPbLusawQ5QJNEk/wP8IwHVNpU5DiIc9XBb4BsnjrQTM+ZnSJIyw=~1; cb=1; cul=en-US; lsc=%7B%22Map%22%3A%7B%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.71778%2C%22Longitude%22%3A-117.09928%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A32.77301%2C%22Longitude%22%3A-117.16786%7D%7D%2C%22CountryCode%22%3A%22US%22%7D%2C%22Geography%22%3A%7B%22ID%22%3A%22h6emeh3%22%2C%22Display%22%3A%22San%20Diego%2C%20CA%22%2C%22GeographyType%22%3A2%2C%22Address%22%3A%7B%22City%22%3A%22San%20Diego%22%2C%22CountryCode%22%3A%22USA%22%2C%22County%22%3A%22San%20Diego%22%2C%22State%22%3A%22CA%22%2C%22MarketName%22%3A%22San%20Diego%22%2C%22DMA%22%3A%22San%20Diego%2C%20CA%22%7D%2C%22Location%22%3A%7B%22Latitude%22%3A32.825%2C%22Longitude%22%3A-117.094%7D%2C%22BoundingBox%22%3A%7B%22LowerRight%22%3A%7B%22Latitude%22%3A32.53479%2C%22Longitude%22%3A-116.90572%7D%2C%22UpperLeft%22%3A%7B%22Latitude%22%3A33.11425%2C%22Longitude%22%3A-117.2823%7D%7D%2C%22v%22%3A23508%2C%22IsPmcSearchByCityState%22%3Afalse%7D%2C%22Listing%22%3A%7B%22Style%22%3A21%7D%2C%22Paging%22%3A%7B%7D%2C%22IsBoundedSearch%22%3Atrue%2C%22ResultSeed%22%3A364280%2C%22Options%22%3A0%2C%22CountryAbbreviation%22%3A%22US%22%7D; s=; sr=%7B%22Width%22%3A1374%2C%22Height%22%3A896%2C%22PixelRatio%22%3A2%7D; uat=%7B%22VisitorId%22%3A%22a69d322d-dafe-4ee7-9e40-6123b6f5c2c2%22%2C%22VisitId%22%3A%220f3245fb-91df-4002-92ca-766b1d9bc7e7%22%2C%22LastActivityDate%22%3A%222024-07-12T14%3A21%3A00.472713-07%3A00%22%2C%22LastFrontDoor%22%3A%22APTS%22%2C%22LastSearchId%22%3A%22EB871557-9394-4141-BA5F-75A449B58E6C%22%7D; _dd_s=rum=0&expire=1720820286418; RT="z=1&dm=apartments.com&si=f75a506d-9abb-4885-b04a-0d10ed095a32&ss=lyj7cui3&sl=0&tt=0&bcn=%2F%2F17de4c16.akstat.io%2F&ld=245n4&nu=9y8m6cy&cl=1plb"; cto_bundle=Uyc06F8lMkZMQlRucG1PZnQ5cGQ2aFBPem5hZlNkaSUyRjY5MHVVS0IzR2pyajlCMjJMWFBTNjMlMkY1eVVhYzNxUlZtTkVLdHJSSE9hWXNsR1hXQ1RaSjVnc1cxOE5jWHgxTlpGNzlMa2t6ZkRRUlVnZEZQOHhNQTRxTGVDUjFiJTJCV3BrQWtrQllXMFZrN1h3NnhvTUlGaEx0SzNmall0TUtZSVFsdGdUJTJCb0dPZnNnQ3l1aHRrJTNE; tfpsi=03737b89-f63c-4e0b-8965-994ea3607129; _dpm_id.c51a=11d5ac65-3e8f-4893-b064-32f9f3f05d29.1712253630.12.1720819261.1720815708.f259cc88-6cbb-4d92-aa19-4e1a928a2c5d; _dpm_ses.c51a=*; _pin_unauth=dWlkPU1UVXlZamhtWldRdFkyTTVPQzAwT0RFd0xXSXlOR1F0TnpJME1XWXdOVE5sT0RkbQ; _screload=; OptanonConsent=isGpcEnabled=0&datestamp=Fri+Jul+12+2024+14%3A21%3A00+GMT-0700+(Pacific+Daylight+Time)&version=202401.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=30fed092-18a3-4ce0-a41b-0abe83bfe45f&interactionCount=0&landingPath=NotLandingPage&groups=C0001%3A1%2CC0003%3A1%2CC0002%3A1%2CC0004%3A1&AwaitingReconsent=false; _ga=GA1.1.760150656.1712253629; _gcl_au=1.1.2089699608.1720029928; _gid=GA1.2.681374455.1720815414; _scid_r=3073b147-2e94-4f10-b6f6-9540644d0cf1; _uetsid=ae772420408b11ef961a87690ae44e93; _uetvid=38fee260f2ad11ee8f97c38113b98a47; akaalb_www_apartments_com_main=1720822860~op=ap_rent_trends_exclusions:www_apartments_com_LAX|apartments_Prd_Edge_US:www_apartments_com_LAX|~rv=17~m=www_apartments_com_LAX:0|~os=0847b47fe1c72dfaedb786f1e8b4b630~id=23139ce9a59532f229a20fdba20f42ee; _clck=6gqxxm%7C2%7Cfne%7C0%7C1555; ak_bmsc=4504A5FCBB89EFB40D8A2975FE3A002C~000000000000000000000000000000~YAAQUgw0F3TJBZ+QAQAAJW2XqBhTjztnl+sZ9mREH7VotCFUg/v/bwdE/HBCUd6+mpuKHr/6H3At4LvVmRZZ86lKUM7tDeEQLHY/RuRdm9EZbv2lhFuivYvedcLhC25RX3tZe2wcPI6eW7yMAtag1OnG9/xiSFrOv1hX9dItaiTR6xLa0hqn4wo9t8xZ5B+P1JVcKMeq3m/ptTrOGKN8qLQLadqoYoin+CnhUiKgy141v6JdimfSc6/xQaabuyvG6cMoOCcMX6zkdZi6X8HqEzBGHp+sSN4mgCPVKFyBzd0MafM9ma/2+5kNrvCBqnyf21wqZRsHBVIXFKW/2rwgBCvwz7I+qNfM15Eh3W69vwAusT6C4P8hrrDVzRPLNg/WGMVJkp6JWpGYxEKTsSkHqmRiiYVcWAU2tWItLk5/q0PSEHOArq8NVBjGq9GxiDq0WDypXiI92NNu9PoLvKW001I=; _sctr=1%7C1720335600000; ab=%7b%22e%22%3atrue%2c%22r%22%3a%5b%5d%7d; _scid=3073b147-2e94-4f10-b6f6-9540644d0cf1; _tt_enable_cookie=1; _ttp=34uuuFODtquELZLWjX1ldkQrjj6; afe=%7b%22e%22%3afalse%7d; fso=%7b%22e%22%3afalse%7d' \
+-H 'Sec-Fetch-Dest: document' \
+-H 'Accept-Language: en-US,en;q=0.9' \
+-H 'Sec-Fetch-Mode: navigate' \
+-H 'Host: www.apartments.com' \
+-H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15' \
+-H 'Referer: https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/' \
+-H 'Accept-Encoding: gzip, deflate, br' \
+-H 'Connection: keep-alive'
+
+fetch("https://www.apartments.com/apartments-condos-townhomes/san-diego-ca/?bb=l5qu05s_4M6y-rkJ", {
+    "cache": "default",
+    "credentials": "include",
+    "headers": {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15"
+    },
+    "method": "GET",
+    "mode": "cors",
+    "redirect": "follow",
+    "referrer": "https://www.apartments.com/675-ninth-ave-san-diego-ca-unit-1906/78mqscx/",
+    "referrerPolicy": "strict-origin-when-cross-origin"
+})
