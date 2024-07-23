@@ -1,0 +1,11 @@
+streamlit
+folium
+json
+streamlit_folium
+folium.plugins.MarkerCluster
+folium.map.Marker
+folium.map.Popup
+pandas
+streamlit_extras.image_in_tables
+streamlit_extras.grid
+folium.plugins.Draw
