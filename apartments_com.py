@@ -817,6 +817,7 @@ def get_lat_lon_from_address(address):
         print(f"Geocoder Timed Out for address: {address}")
         return None, None
 
+
 def fetch_san_diego_data():
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
