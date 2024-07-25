@@ -5,39 +5,30 @@ from folium.plugins import Draw
 import pandas as pd
 from shapely.geometry import Point, Polygon
 
-
 def filter_data_within_bounds(data, polygon):
-    # Function to check if a point is within the polygon
     def is_within_bounds(lat, lon, polygon):
         point = Point(lon, lat)
         return polygon.contains(point)
 
-    # Apply the filter to the dataframe
-    filtered_data = data[
-        data.apply(
-            lambda row: is_within_bounds(row["Latitude"], row["Longitude"], polygon),
-            axis=1,
-        )
-    ]
-
+    filtered_data = data[data.apply(lambda row: is_within_bounds(row["Latitude"], row["Longitude"], polygon), axis=1)]
     return filtered_data
 
-
 # Load data
-data = pd.read_csv(
-    "costar/building_data/2024-07-22-23-47-05/costar_data_2024-07-22-23-47-05.csv"
-)
+data = pd.read_csv("costar/building_data/2024-07-22-23-47-05/costar_data_2024-07-22-23-47-05.csv")
 
 # Initialize Streamlit app
 st.set_page_config(page_title="ReSeed Costar", layout="wide")
 st.title("San Diego Apartments")
 
-# Sidebar filters
 st.sidebar.header("Filter Options")
 costar_ranking = st.sidebar.slider("Costar Ranking", 1, 5, (4, 5))
 number_of_units = st.sidebar.slider("Number of Units", 0, 300, (0, 300))
 year_built_input = st.sidebar.slider("Year Built", 1900, 2027, (1900, 2027), 1)
-vacancy_rate = st.sidebar.slider("Vacancy %", 0, 100, (0, 100))
+# property_type = st.sidebar.multiselect("Property Type", data["PropertyType"].unique())
+building_status = st.sidebar.multiselect("Building Status", data["Building Status"].unique())
+# operational_status = st.sidebar.multiselect("Operational Status", data["Operational Status"].unique())
+# vacancy_rate = st.sidebar.slider("Vacancy %", 0, 100, (0, 100))
+# parking_spaces = st.sidebar.slider("Number Of Parking Spaces", 0, 600, (0, 600))
 
 # Filter data based on sidebar inputs
 filtered_data = data[
@@ -47,16 +38,23 @@ filtered_data = data[
     & (data["Number Of Units"] <= number_of_units[1])
     & (data["Year Built"] >= year_built_input[0])
     & (data["Year Built"] <= year_built_input[1])
-    & (data["Vacancy %"] >= vacancy_rate[0])
+    # & (data["Vacancy %"] >= vacancy_rate[0])
+    # & (data["Vacancy %"] <= vacancy_rate[1])
+    # & (data["Number Of Parking Spaces"] >= parking_spaces[0])
+    # & (data["Number Of Parking Spaces"] <= parking_spaces[1])
 ]
 
+# if property_type:
+#     filtered_data = filtered_data[filtered_data["PropertyType"].isin(property_type)]
+if building_status:
+    filtered_data = filtered_data[filtered_data["Building Status"].isin(building_status)]
+# if operational_status:
+#     filtered_data = filtered_data[filtered_data["Operational Status"].isin(operational_status)]
+
 # Show the map
-st.header("Map")
+# st.header("Map")
 m = folium.Map(location=(32.7157, -117.1611), zoom_start=12)
-Draw(
-    export=True,
-    draw_options={"polyline": False, "marker": False, "circlemarker": False},
-).add_to(m)
+Draw(export=True, draw_options={"polyline": False, "marker": False, "circlemarker": False, "circle": False}).add_to(m)
 
 def popup(row):
     fields = [
@@ -68,11 +66,8 @@ def popup(row):
         ("Costar Rating", row["Star Rating"]),
         ("Avg Asking/SF", row["Avg Asking/SF"]),
     ]
-
     details = [f"{label}: {value}" for label, value in fields if pd.notna(value)]
-
     return f'<div style="width: 200px; font-size: 14px">{details[0]}<br>{"<br>".join(details[1:])}</div>'
-
 
 for i, row in filtered_data.iterrows():
     folium.Marker(
@@ -82,53 +77,40 @@ for i, row in filtered_data.iterrows():
 
 # Display the map and get user interaction data
 st_data = st_folium(m, width=1000)
-# display the st_data to see the structure
-# st.write(st_data)
 
-# if there exits drawings, add a radio selector to choose which drawing to filter by:
+# if there exists borders, add a button selector to choose which border to filter by:
 if "all_drawings" in st_data and st_data["all_drawings"]:
-    drawing_selector = st.radio(
-        "Filter by Drawing",
-        ["No Drawing Filter"]
-        + [f"Drawing {i + 1}" for i in range(len(st_data["all_drawings"]))],
+    border_selector = st.radio(
+        "Border Filter",
+        ["No Border Filter"] + [f"Border {i + 1}" for i in range(len(st_data["all_drawings"]))],
+        horizontal=True,
+        key="border_selector"
     )
-
 
 # If the user has drawn a rectangle, filter the data accordingly
-if (
-    "bounds" in st_data
-    and st_data["bounds"]
-    and (
-        "all_drawings" in st_data
-        and st_data["all_drawings"]
-        and drawing_selector != "No Drawing Filter"
-    )
-):
-    bounds = st_data["bounds"]
-    filtered_data = filtered_data[
-        (filtered_data["Latitude"] > bounds["_southWest"]["lat"])
-        & (filtered_data["Latitude"] < bounds["_northEast"]["lat"])
-        & (filtered_data["Longitude"] > bounds["_southWest"]["lng"])
-        & (filtered_data["Longitude"] < bounds["_northEast"]["lng"])
-    ]
+if "bounds" in st_data and st_data["bounds"]:
+    if "all_drawings" in st_data and st_data["all_drawings"] and border_selector != "No Border Filter":
+        bounds = st_data["bounds"]
+        filtered_data = filtered_data[
+            (filtered_data["Latitude"] > bounds["_southWest"]["lat"])
+            & (filtered_data["Latitude"] < bounds["_northEast"]["lat"])
+            & (filtered_data["Longitude"] > bounds["_southWest"]["lng"])
+            & (filtered_data["Longitude"] < bounds["_northEast"]["lng"])
+        ]
 
 # Table view selector
 view_selector = st.radio(
-    "Table Views",
-    ["All", "Unit Breakdown", "Financial Overview", "Property Management", "Sales Information", "Amenities"]
+    "Table View",
+    ["All", "Unit Breakdown", "Financial Overview", "Property Management", "Sales Information", "Amenities"],
+    horizontal=True,
+    key="view_selector"
 )
 
-# if the user has selected a drawing, filter the data accordingly
-if (
-    "all_drawings" in st_data
-    and st_data["all_drawings"]
-    and drawing_selector != "No Drawing Filter"
-):
-    drawing = st_data["all_drawings"][int(drawing_selector.split(" ")[1]) - 1]
-    polygon = Polygon(drawing["geometry"]["coordinates"][0])
+# if the user has selected a border, filter the data accordingly
+if "all_drawings" in st_data and st_data["all_drawings"] and border_selector != "No Border Filter":
+    border = st_data["all_drawings"][int(border_selector.split(" ")[1]) - 1]
+    polygon = Polygon(border["geometry"]["coordinates"][0])
     filtered_data = filter_data_within_bounds(filtered_data, polygon)
-
-    # st.write(f"Number of properties in view: {len(filtered_data)}")
 
 # Display the table based on the selected view
 if view_selector == "All":
